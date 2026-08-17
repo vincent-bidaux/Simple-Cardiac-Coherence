@@ -31,7 +31,13 @@
   </section>
 
   <section class="hud">
-    <div class="timer" id="timer">05:00</div>
+    <div class="time-row">
+      <span class="time-elapsed" id="timeElapsed">0:00</span>
+      <span class="time-remaining" id="timeRemaining">5:00</span>
+    </div>
+    <div class="progress-track" aria-hidden="true">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
     <div class="mode-name" id="modeName"></div>
   </section>
 

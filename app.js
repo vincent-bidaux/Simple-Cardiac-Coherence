@@ -47,7 +47,9 @@ const SCALE_AMP = (MAX_SCALE - MIN_SCALE) / 2;
 
 const circle = document.getElementById("circle");
 const phaseLabel = document.getElementById("phaseLabel");
-const timerEl = document.getElementById("timer");
+const timeElapsedEl = document.getElementById("timeElapsed");
+const timeRemainingEl = document.getElementById("timeRemaining");
+const progressFill = document.getElementById("progressFill");
 const modeNameEl = document.getElementById("modeName");
 const modeSwitch = document.getElementById("modeSwitch");
 
@@ -75,11 +77,18 @@ function setScale(scale) {
   circle.style.setProperty("--scale", scale.toFixed(4));
 }
 
+function updateTimeDisplay(elapsed) {
+  const clamped = Math.min(elapsed, sessionTotalMs);
+  timeElapsedEl.textContent = formatTime(clamped);
+  timeRemainingEl.textContent = formatTime(sessionTotalMs - clamped);
+  progressFill.style.width = `${((clamped / sessionTotalMs) * 100).toFixed(2)}%`;
+}
+
 function updateStaticDisplay() {
   modeNameEl.textContent = `${currentMode.label} · ${currentMode.detail}`;
-  timerEl.textContent = formatTime(sessionTotalMs);
   phaseLabel.textContent = "Prêt";
   setScale(MIN_SCALE);
+  updateTimeDisplay(0);
 }
 
 function renderModeSwitch() {
@@ -146,7 +155,7 @@ function tick() {
   const scale = SCALE_MID + SCALE_AMP * Math.sin(2 * Math.PI * phase - Math.PI / 2);
   setScale(scale);
   phaseLabel.textContent = phase < 0.5 ? "Inspire" : "Expire";
-  timerEl.textContent = formatTime(sessionTotalMs - elapsed);
+  updateTimeDisplay(elapsed);
   rafId = requestAnimationFrame(tick);
 }
 
@@ -165,6 +174,7 @@ function pause() {
   cancelAnimationFrame(rafId);
   circle.classList.remove("running");
   phaseLabel.textContent = "Pause";
+  updateTimeDisplay(elapsedMs);
   releaseWakeLock();
 }
 
@@ -176,10 +186,10 @@ function finishSession() {
   releaseWakeLock();
   setScale(MIN_SCALE);
   phaseLabel.textContent = "Terminé";
-  timerEl.textContent = "0:00";
+  updateTimeDisplay(sessionTotalMs);
   finishTimeout = setTimeout(() => {
     phaseLabel.textContent = "Prêt";
-    timerEl.textContent = formatTime(sessionTotalMs);
+    updateTimeDisplay(0);
   }, 2200);
 }
 

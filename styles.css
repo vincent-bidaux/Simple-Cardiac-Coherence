@@ -113,16 +113,40 @@ body {
   text-align: center;
 }
 
-.timer {
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  width: min(78vw, 320px);
+  margin: 0 auto;
   font-variant-numeric: tabular-nums;
-  font-size: clamp(26px, 7vw, 34px);
-  font-weight: 300;
-  letter-spacing: 0.04em;
-  color: rgba(234, 246, 255, 0.9);
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(234, 246, 255, 0.85);
+  letter-spacing: 0.02em;
+}
+
+.time-remaining {
+  color: rgba(234, 246, 255, 0.95);
+}
+
+.progress-track {
+  width: min(78vw, 320px);
+  height: 3px;
+  margin: 7px auto 0;
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--blue-edge), var(--blue-mid));
+  border-radius: 2px;
 }
 
 .mode-name {
-  margin-top: 4px;
+  margin-top: 10px;
   font-size: 13px;
   color: var(--text-dim);
 }

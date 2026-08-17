@@ -41,6 +41,8 @@ cohérence cardiaque :
 - Toucher le cercle pour démarrer / mettre en pause.
 - Le cercle grandit à l'inspiration, se réduit à l'expiration ; le texte
   au centre indique la phase.
+- Sous le cercle : temps écoulé à gauche, temps restant à droite, avec une
+  barre de progression de la séance entre les deux.
 - L'écran reste allumé pendant une séance active (Screen Wake Lock, quand
   le navigateur le supporte).
 
