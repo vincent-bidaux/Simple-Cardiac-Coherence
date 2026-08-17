@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>Simple Cardiac Coherence</title>
+<meta name="description" content="Cohérence cardiaque guidée : un cercle bleu clair grandit et se réduit selon 4 rythmes de respiration recommandés." />
+<meta name="theme-color" content="#05070c" />
+<meta name="color-scheme" content="dark" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Cohérence" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main class="app">
+  <header class="header">
+    <span class="app-name">Simple Cardiac Coherence</span>
+  </header>
+
+  <section class="stage">
+    <div class="glow" aria-hidden="true"></div>
+    <button class="circle" id="circle" type="button" aria-label="Démarrer ou mettre en pause la séance">
+      <span class="phase-label" id="phaseLabel">Prêt</span>
+    </button>
+  </section>
+
+  <section class="hud">
+    <div class="timer" id="timer">05:00</div>
+    <div class="mode-name" id="modeName"></div>
+  </section>
+
+  <nav class="mode-switch" id="modeSwitch" role="tablist" aria-label="Choisir un mode de respiration"></nav>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
