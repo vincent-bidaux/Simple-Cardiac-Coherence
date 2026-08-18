@@ -344,7 +344,6 @@ function toggleInfo() {
   stage.classList.toggle("info-open", infoOpen);
   titleToggle.setAttribute("aria-expanded", String(infoOpen));
 }
-titleToggle.addEventListener("click", toggleInfo);
 
 function applyTranslations() {
   document.documentElement.lang = LOCALE;
@@ -385,52 +384,88 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// --- Diagnostic temporaire (?debug=1) ----------------------------------
+// --- Diagnostic temporaire ----------------------------------------------
 // À retirer une fois le bug de mise en page iOS standalone confirmé résolu.
 //
-// Une app installée sur l'écran d'accueil s'ouvre toujours sur le
-// start_url du manifest, jamais sur une URL avec ?debug=1 — donc on
-// mémorise l'activation dans localStorage : ouvrir ...?debug=1 une fois
-// dans Safari suffit, l'overlay réapparaîtra ensuite même en ouvrant
-// l'icône installée. ?debug=0 désactive.
-if (/[?&]debug=1/.test(location.search)) {
-  localStorage.setItem("scc_debug", "1");
-} else if (/[?&]debug=0/.test(location.search)) {
-  localStorage.removeItem("scc_debug");
+// Une app standalone (ajoutée à l'écran d'accueil) tourne dans un
+// contexte qui ne partage pas forcément le localStorage/les query params
+// de Safari, donc ?debug=1 seul ne suffit pas à l'atteindre depuis
+// l'icône installée. Un appui long (800ms) sur le titre, en haut, marche
+// dans les deux cas puisqu'il ne dépend d'aucun état partagé.
+let debugInterval = null;
+function renderDebug(el) {
+  const vv = window.visualViewport;
+  const appRect = document.querySelector(".app").getBoundingClientRect();
+  const bottomRect = bottomUi.getBoundingClientRect();
+  const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+  el.textContent = [
+    `build: flexbox+dvh (no JS height calc)`,
+    `sw controller: ${sw ? sw.scriptURL : "none"}`,
+    `standalone: ${window.navigator.standalone}`,
+    `innerHeight: ${window.innerHeight}`,
+    `outerHeight: ${window.outerHeight}`,
+    `screen.height: ${screen.height}`,
+    `screen.availHeight: ${screen.availHeight}`,
+    `docEl.clientHeight: ${document.documentElement.clientHeight}`,
+    `body.clientHeight: ${document.body.clientHeight}`,
+    `vv.height: ${vv ? vv.height : "n/a"}`,
+    `vv.offsetTop: ${vv ? vv.offsetTop : "n/a"}`,
+    `vv.scale: ${vv ? vv.scale : "n/a"}`,
+    `dpr: ${window.devicePixelRatio}`,
+    `.app rect: top=${appRect.top} bottom=${appRect.bottom} h=${appRect.height}`,
+    `.bottom-ui rect: top=${bottomRect.top} bottom=${bottomRect.bottom}`,
+    `gap below bottom-ui: ${window.innerHeight - bottomRect.bottom}`,
+  ].join("\n");
 }
-if (localStorage.getItem("scc_debug") === "1") {
+
+function createDebugOverlay() {
+  if (document.getElementById("debugOverlay")) return;
   const el = document.createElement("pre");
   el.id = "debugOverlay";
   el.style.cssText =
-    "position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(0,0,0,0.8);" +
+    "position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(0,0,0,0.85);" +
     "color:#7fd4ff;font:10px/1.45 monospace;padding:8px 10px;border-radius:8px;" +
     "pointer-events:none;white-space:pre;max-width:94vw;max-height:70vh;overflow:auto;";
   document.body.appendChild(el);
-  function renderDebug() {
-    const vv = window.visualViewport;
-    const appRect = document.querySelector(".app").getBoundingClientRect();
-    const bottomRect = bottomUi.getBoundingClientRect();
-    const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
-    el.textContent = [
-      `build: flexbox+dvh (no JS height calc)`,
-      `sw controller: ${sw ? sw.scriptURL : "none"}`,
-      `standalone: ${window.navigator.standalone}`,
-      `innerHeight: ${window.innerHeight}`,
-      `outerHeight: ${window.outerHeight}`,
-      `screen.height: ${screen.height}`,
-      `screen.availHeight: ${screen.availHeight}`,
-      `docEl.clientHeight: ${document.documentElement.clientHeight}`,
-      `body.clientHeight: ${document.body.clientHeight}`,
-      `vv.height: ${vv ? vv.height : "n/a"}`,
-      `vv.offsetTop: ${vv ? vv.offsetTop : "n/a"}`,
-      `vv.scale: ${vv ? vv.scale : "n/a"}`,
-      `dpr: ${window.devicePixelRatio}`,
-      `.app rect: top=${appRect.top} bottom=${appRect.bottom} h=${appRect.height}`,
-      `.bottom-ui rect: top=${bottomRect.top} bottom=${bottomRect.bottom}`,
-      `gap below bottom-ui: ${window.innerHeight - bottomRect.bottom}`,
-    ].join("\n");
+  renderDebug(el);
+  debugInterval = setInterval(() => renderDebug(el), 1000);
+  localStorage.setItem("scc_debug", "1");
+}
+
+function removeDebugOverlay() {
+  const el = document.getElementById("debugOverlay");
+  if (el) el.remove();
+  if (debugInterval) {
+    clearInterval(debugInterval);
+    debugInterval = null;
   }
-  renderDebug();
-  window.addEventListener("resize", renderDebug);
-  setInterval(renderDebug, 1000);
+  localStorage.removeItem("scc_debug");
+}
+
+function toggleDebugOverlay() {
+  if (document.getElementById("debugOverlay")) removeDebugOverlay();
+  else createDebugOverlay();
+}
+
+let titlePressTimer = null;
+let titleLongPressed = false;
+titleToggle.addEventListener("pointerdown", () => {
+  titleLongPressed = false;
+  titlePressTimer = setTimeout(() => {
+    titleLongPressed = true;
+    toggleDebugOverlay();
+  }, 800);
+});
+["pointerup", "pointercancel", "pointerleave"].forEach((evt) => {
+  titleToggle.addEventListener(evt, () => clearTimeout(titlePressTimer));
+});
+titleToggle.addEventListener("click", () => {
+  if (titleLongPressed) return; // l'appui long a déjà géré ce tap
+  toggleInfo();
+});
+
+if (/[?&]debug=1/.test(location.search) || localStorage.getItem("scc_debug") === "1") {
+  createDebugOverlay();
+} else if (/[?&]debug=0/.test(location.search)) {
+  localStorage.removeItem("scc_debug");
 }
