@@ -33,7 +33,15 @@ body {
 
 .app {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* window.innerHeight mesuré en JS (voir app.js), fiable même en mode
+     standalone iOS (Ajout à l'écran d'accueil) où les unités CSS de
+     viewport (dvh/svh/lvh, voire un simple inset:0) peuvent laisser un
+     espace en bas à cause de la façon dont WebKit gère la zone sûre. */
+  height: calc(var(--app-height, 100vh));
+  width: 100%;
   user-select: none;
 }
 

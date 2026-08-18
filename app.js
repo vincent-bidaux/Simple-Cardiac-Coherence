@@ -235,9 +235,23 @@ circle.addEventListener("click", () => {
   }
 });
 
+function setAppHeight() {
+  // window.innerHeight reflète la vraie fenêtre visible, y compris en
+  // mode standalone (app ajoutée à l'écran d'accueil), sans les
+  // approximations des unités CSS de viewport sur iOS.
+  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+}
+
 function updateStageInsets() {
   document.documentElement.style.setProperty("--reserved-top", `${header.offsetHeight}px`);
   document.documentElement.style.setProperty("--reserved-bottom", `${bottomUi.offsetHeight}px`);
+}
+
+setAppHeight();
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", setAppHeight);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", setAppHeight);
 }
 
 // Le "stage" (zone de respiration) est borné à l'espace réellement
