@@ -32,13 +32,15 @@ body {
 }
 
 .app {
-  /* flux flexbox normal en 3 lignes (header / stage / bottom-ui) plutôt
-     que du position:fixed + des zones réservées mesurées en JS : le
-     navigateur recalcule lui-même la mise en page à chaque changement de
-     viewport (barre d'adresse qui apparaît/disparaît, mode standalone),
-     de façon bien plus fiable que nos propres calculs. */
-  height: 100vh; /* repli pour les navigateurs sans dvh */
+  /* Flux flexbox normal en 3 lignes (header / stage / bottom-ui). En
+     mode standalone iOS, dvh/innerHeight sous-évaluent la hauteur
+     réelle disponible (bug WebKit confirmé : innerHeight=793 alors que
+     screen.height=852 sur le même appareil) — app.js corrige la valeur
+     via --app-height dans ce cas précis ; ces deux lignes restent le
+     repli pour tous les autres contextes (Safari normal, desktop...). */
+  height: 100vh;
   height: 100dvh;
+  height: var(--app-height, 100dvh);
   width: 100%;
   display: flex;
   flex-direction: column;

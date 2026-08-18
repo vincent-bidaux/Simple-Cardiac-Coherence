@@ -355,6 +355,25 @@ function applyTranslations() {
   if (descMeta) descMeta.setAttribute("content", T.description);
 }
 
+// En mode standalone iOS, dvh/innerHeight peuvent sous-évaluer la vraie
+// hauteur d'écran disponible (confirmé sur appareil : innerHeight=793 vs
+// screen.height=852, un écart de 59px qui laissait exactement ce vide
+// sous l'UI du bas). screen.height/screen.width sont eux fiables. En
+// navigateur normal (pas standalone), on ne touche à rien : innerHeight
+// y exclut correctement la barre d'outils du navigateur, et utiliser
+// screen.height ferait déborder le contenu derrière elle.
+function setAppHeight() {
+  if (window.navigator.standalone) {
+    const h = window.innerHeight >= window.innerWidth ? screen.height : screen.width;
+    document.documentElement.style.setProperty("--app-height", `${h}px`);
+  } else {
+    document.documentElement.style.removeProperty("--app-height");
+  }
+}
+setAppHeight();
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", setAppHeight);
+
 applyTranslations();
 renderModeSwitch();
 updateStaticDisplay();
@@ -398,8 +417,10 @@ function renderDebug(el) {
   const appRect = document.querySelector(".app").getBoundingClientRect();
   const bottomRect = bottomUi.getBoundingClientRect();
   const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+  const appHeightVar = getComputedStyle(document.documentElement).getPropertyValue("--app-height");
   el.textContent = [
-    `build: flexbox+dvh (no JS height calc)`,
+    `build: flexbox + screen.height override on standalone`,
+    `--app-height: ${appHeightVar || "(unset, using dvh)"}`,
     `sw controller: ${sw ? sw.scriptURL : "none"}`,
     `standalone: ${window.navigator.standalone}`,
     `innerHeight: ${window.innerHeight}`,
