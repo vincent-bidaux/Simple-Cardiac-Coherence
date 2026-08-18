@@ -167,9 +167,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: normal;
   color: rgba(8, 26, 38, 0.55);
   /* contrebalance le transform:scale() du parent pour rester lisible
      quelle que soit la taille courante du cercle ; clamp() évite un
@@ -258,9 +258,6 @@ body {
   flex: 1;
   text-align: center;
   cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: rgba(234, 246, 255, 0.28);
-  text-underline-offset: 3px;
 }
 
 .progress-track {

@@ -68,7 +68,7 @@ const DEFAULT_MODE_ID = "standard";
 // Tailles exprimées en fraction de vmin/cqmin (le cercle a une boîte de
 // base de 100%, transform:scale() représente donc directement cette
 // fraction).
-const VMIN_REST = 0.1; // au lancement de l'app / après la fin d'un programme
+const VMIN_REST = 0.14; // au lancement de l'app / après la fin d'un programme
 const VMIN_MIN = 0.2; // taille mini pendant la respiration
 const VMIN_MAX = 0.9; // taille maxi (= le contour de référence)
 const VMIN_MID = (VMIN_MIN + VMIN_MAX) / 2;
@@ -231,8 +231,47 @@ function tick() {
   rafId = requestAnimationFrame(tick);
 }
 
+// --- Sons doux de début/fin de séance -----------------------------------
+// Générés en Web Audio (pas de fichier audio à héberger), volume bas,
+// enveloppe douce pour rester discrets.
+let audioCtx = null;
+function getAudioCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!audioCtx) audioCtx = new AC();
+  if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+  return audioCtx;
+}
+
+function playTone(freq, duration, delay, peakGain) {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  const t0 = ctx.currentTime + delay;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(peakGain, t0 + 0.09);
+  gain.gain.linearRampToValueAtTime(0, t0 + duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + duration + 0.05);
+}
+
+function playStartChime() {
+  playTone(523.25, 0.55, 0, 0.1); // C5
+  playTone(659.25, 0.6, 0.12, 0.08); // E5
+}
+
+function playEndChime() {
+  playTone(659.25, 0.5, 0, 0.09); // E5
+  playTone(523.25, 0.65, 0.14, 0.07); // C5, résolution descendante
+}
+
 function beginSession() {
   clearTimeout(finishTimeout);
+  if (elapsedMs === 0) playStartChime();
   circle.classList.add("active");
   runStartTs = performance.now();
   requestWakeLock();
@@ -281,6 +320,7 @@ function finishSession() {
   elapsedMs = 0;
   circle.classList.remove("active");
   releaseWakeLock();
+  playEndChime();
   phaseLabel.textContent = T.finished;
   updateTimeDisplay(sessionTotalMs);
   settleToRest();
@@ -374,7 +414,18 @@ if ("serviceWorker" in navigator) {
 
 // --- Diagnostic temporaire (?debug=1) ----------------------------------
 // À retirer une fois le bug de mise en page iOS standalone confirmé résolu.
+//
+// Une app installée sur l'écran d'accueil s'ouvre toujours sur le
+// start_url du manifest, jamais sur une URL avec ?debug=1 — donc on
+// mémorise l'activation dans localStorage : ouvrir ...?debug=1 une fois
+// dans Safari suffit, l'overlay réapparaîtra ensuite même en ouvrant
+// l'icône installée. ?debug=0 désactive.
 if (/[?&]debug=1/.test(location.search)) {
+  localStorage.setItem("scc_debug", "1");
+} else if (/[?&]debug=0/.test(location.search)) {
+  localStorage.removeItem("scc_debug");
+}
+if (localStorage.getItem("scc_debug") === "1") {
   const el = document.createElement("pre");
   el.id = "debugOverlay";
   el.style.cssText =
