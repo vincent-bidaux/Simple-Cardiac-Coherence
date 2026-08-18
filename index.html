@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Simple Cardiac Coherence</title>
-<meta name="description" content="Cohérence cardiaque guidée : un cercle bleu clair grandit et se réduit selon 4 rythmes de respiration recommandés." />
+<meta name="description" content="Cohérence cardiaque guidée : un cercle bleu clair grandit et se réduit selon 3 rythmes de respiration recommandés." />
 <meta name="theme-color" content="#05070c" />
 <meta name="color-scheme" content="dark" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -25,23 +25,22 @@
 
   <section class="stage">
     <div class="glow" aria-hidden="true"></div>
-    <button class="circle" id="circle" type="button" aria-label="Démarrer ou mettre en pause la séance">
-      <span class="phase-label" id="phaseLabel">Prêt</span>
-    </button>
+    <div class="max-ring" aria-hidden="true"></div>
+    <button class="circle" id="circle" type="button" aria-label="Démarrer ou mettre en pause la séance"></button>
   </section>
 
-  <section class="hud">
+  <section class="bottom-ui">
     <div class="time-row">
       <span class="time-elapsed" id="timeElapsed">0:00</span>
+      <span class="phase-label" id="phaseLabel">Prêt</span>
       <span class="time-remaining" id="timeRemaining">5:00</span>
     </div>
     <div class="progress-track" aria-hidden="true">
       <div class="progress-fill" id="progressFill"></div>
     </div>
     <div class="mode-name" id="modeName"></div>
+    <nav class="mode-switch" id="modeSwitch" role="tablist" aria-label="Choisir un mode de respiration"></nav>
   </section>
-
-  <nav class="mode-switch" id="modeSwitch" role="tablist" aria-label="Choisir un mode de respiration"></nav>
 </main>
 
 <script src="app.js"></script>

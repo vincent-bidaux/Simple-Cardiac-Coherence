@@ -1,21 +1,14 @@
 // Simple Cardiac Coherence — respiration guidée par un cercle.
 //
-// 4 modes = 4 couples (rythme, durée) parmi les plus recommandés en
+// 3 modes = 3 couples (rythme, durée) parmi les plus recommandés en
 // cohérence cardiaque :
 // - "365" (Dr David O'Hare) : 6 respirations/minute, 5 minutes, 3x/jour —
 //   c'est LA référence, retenue ici comme mode par défaut.
 // - la fréquence de résonance individuelle se situe généralement entre
-//   4,5 et 7 resp/min : on couvre cette plage avec un mode plus lent
-//   (Profond) et un mode plus rapide (Découverte, plus facile à tenir
-//   pour débuter) plus un format court (Express) pour un reset rapide.
+//   4,5 et 7 resp/min : "Profond" couvre le bas de cette plage pour une
+//   pratique plus avancée, "Express" garde le rythme de référence dans
+//   un format court pour un reset rapide dans la journée.
 const MODES = [
-  {
-    id: "decouverte",
-    label: "Découverte",
-    bpm: 7,
-    durationMin: 5,
-    detail: "7 resp/min · 5 min",
-  },
   {
     id: "standard",
     label: "Standard 365",
@@ -40,10 +33,16 @@ const MODES = [
 ];
 
 const DEFAULT_MODE_ID = "standard";
-const MIN_SCALE = 0.62;
-const MAX_SCALE = 1.0;
-const SCALE_MID = (MIN_SCALE + MAX_SCALE) / 2;
-const SCALE_AMP = (MAX_SCALE - MIN_SCALE) / 2;
+
+// Tailles exprimées en fraction de vmin (le cercle a une boîte de base de
+// 100vmin, transform:scale() représente donc directement cette fraction).
+const VMIN_REST = 0.1; // au lancement de l'app / après la fin d'un programme
+const VMIN_MIN = 0.2; // taille mini pendant la respiration
+const VMIN_MAX = 0.9; // taille maxi (= le contour de référence)
+const VMIN_MID = (VMIN_MIN + VMIN_MAX) / 2;
+const VMIN_AMP = (VMIN_MAX - VMIN_MIN) / 2;
+const WARMUP_MS = 260; // montée rapide de repos -> taille mini au démarrage
+const SETTLE_MS = 450; // redescente en douceur vers le repos à la fin
 
 const circle = document.getElementById("circle");
 const phaseLabel = document.getElementById("phaseLabel");
@@ -87,7 +86,8 @@ function updateTimeDisplay(elapsed) {
 function updateStaticDisplay() {
   modeNameEl.textContent = `${currentMode.label} · ${currentMode.detail}`;
   phaseLabel.textContent = "Prêt";
-  setScale(MIN_SCALE);
+  circle.classList.remove("active");
+  setScale(VMIN_REST);
   updateTimeDisplay(0);
 }
 
@@ -106,19 +106,29 @@ function renderModeSwitch() {
 }
 
 function selectMode(mode) {
-  if (mode.id === currentMode.id && runStartTs === null && elapsedMs === 0) return;
+  if (mode.id === currentMode.id) return;
+  const wasInProgress = runStartTs !== null || elapsedMs > 0;
+
+  clearTimeout(finishTimeout);
+  cancelAnimationFrame(rafId);
+
   currentMode = mode;
   sessionTotalMs = mode.durationMin * 60000;
   elapsedMs = 0;
-  const wasRunning = runStartTs !== null;
-  if (wasRunning) {
-    runStartTs = performance.now();
-  } else {
-    updateStaticDisplay();
-  }
+  runStartTs = null;
+
+  modeNameEl.textContent = `${mode.label} · ${mode.detail}`;
   [...modeSwitch.children].forEach((btn, i) => {
     btn.setAttribute("aria-selected", String(MODES[i].id === mode.id));
   });
+
+  // Changer de mode en cours de séance quitte le programme actuel et
+  // démarre directement le nouveau, plutôt que de continuer en silence.
+  if (wasInProgress) {
+    beginSession();
+  } else {
+    updateStaticDisplay();
+  }
 }
 
 async function requestWakeLock() {
@@ -150,20 +160,31 @@ function tick() {
     finishSession();
     return;
   }
-  const periodMs = 60000 / currentMode.bpm;
-  const phase = (elapsed % periodMs) / periodMs;
-  const scale = SCALE_MID + SCALE_AMP * Math.sin(2 * Math.PI * phase - Math.PI / 2);
+
+  let scale;
+  if (elapsed < WARMUP_MS) {
+    // montée rapide du repos (10%) vers la taille mini (20%) au démarrage
+    const t = elapsed / WARMUP_MS;
+    const eased = 1 - Math.pow(1 - t, 3);
+    scale = VMIN_REST + (VMIN_MIN - VMIN_REST) * eased;
+    phaseLabel.textContent = "Prêt";
+  } else {
+    const breathElapsed = elapsed - WARMUP_MS;
+    const periodMs = 60000 / currentMode.bpm;
+    const phase = (breathElapsed % periodMs) / periodMs;
+    scale = VMIN_MID + VMIN_AMP * Math.sin(2 * Math.PI * phase - Math.PI / 2);
+    phaseLabel.textContent = phase < 0.5 ? "Inspire" : "Expire";
+  }
+
   setScale(scale);
-  phaseLabel.textContent = phase < 0.5 ? "Inspire" : "Expire";
   updateTimeDisplay(elapsed);
   rafId = requestAnimationFrame(tick);
 }
 
-function resume() {
+function beginSession() {
   clearTimeout(finishTimeout);
-  if (elapsedMs >= sessionTotalMs) elapsedMs = 0;
+  circle.classList.add("active");
   runStartTs = performance.now();
-  circle.classList.add("running");
   requestWakeLock();
   rafId = requestAnimationFrame(tick);
 }
@@ -172,21 +193,32 @@ function pause() {
   elapsedMs = getElapsed();
   runStartTs = null;
   cancelAnimationFrame(rafId);
-  circle.classList.remove("running");
   phaseLabel.textContent = "Pause";
   updateTimeDisplay(elapsedMs);
   releaseWakeLock();
+}
+
+function settleToRest() {
+  const start = performance.now();
+  const from = parseFloat(circle.style.getPropertyValue("--scale")) || VMIN_MID;
+  function step(now) {
+    const t = Math.min(1, (now - start) / SETTLE_MS);
+    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    setScale(from + (VMIN_REST - from) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function finishSession() {
   cancelAnimationFrame(rafId);
   runStartTs = null;
   elapsedMs = 0;
-  circle.classList.remove("running");
+  circle.classList.remove("active");
   releaseWakeLock();
-  setScale(MIN_SCALE);
   phaseLabel.textContent = "Terminé";
   updateTimeDisplay(sessionTotalMs);
+  settleToRest();
   finishTimeout = setTimeout(() => {
     phaseLabel.textContent = "Prêt";
     updateTimeDisplay(0);
@@ -197,7 +229,7 @@ circle.addEventListener("click", () => {
   if (runStartTs !== null) {
     pause();
   } else {
-    resume();
+    beginSession();
   }
 });
 
