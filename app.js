@@ -85,7 +85,6 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-const header = document.querySelector(".header");
 const bottomUi = document.querySelector(".bottom-ui");
 const stage = document.getElementById("stage");
 const titleToggle = document.getElementById("titleToggle");
@@ -357,32 +356,6 @@ function applyTranslations() {
   if (descMeta) descMeta.setAttribute("content", T.description);
 }
 
-function setAppHeight() {
-  // window.innerHeight reflète la vraie fenêtre visible, y compris en
-  // mode standalone (app ajoutée à l'écran d'accueil), sans les
-  // approximations des unités CSS de viewport sur iOS.
-  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
-}
-
-function updateStageInsets() {
-  document.documentElement.style.setProperty("--reserved-top", `${header.offsetHeight}px`);
-  document.documentElement.style.setProperty("--reserved-bottom", `${bottomUi.offsetHeight}px`);
-}
-
-setAppHeight();
-window.addEventListener("resize", setAppHeight);
-window.addEventListener("orientationchange", setAppHeight);
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", setAppHeight);
-}
-
-// Le "stage" (zone de respiration) est borné à l'espace réellement
-// disponible entre le header et l'UI du bas, mesuré en pixels, pour que
-// le disque (plafonné à 500px) ne les chevauche jamais.
-new ResizeObserver(updateStageInsets).observe(bottomUi);
-window.addEventListener("resize", updateStageInsets);
-updateStageInsets();
-
 applyTranslations();
 renderModeSwitch();
 updateStaticDisplay();
@@ -437,8 +410,10 @@ if (localStorage.getItem("scc_debug") === "1") {
     const vv = window.visualViewport;
     const appRect = document.querySelector(".app").getBoundingClientRect();
     const bottomRect = bottomUi.getBoundingClientRect();
-    const cs = getComputedStyle(document.documentElement);
+    const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
     el.textContent = [
+      `build: flexbox+dvh (no JS height calc)`,
+      `sw controller: ${sw ? sw.scriptURL : "none"}`,
       `standalone: ${window.navigator.standalone}`,
       `innerHeight: ${window.innerHeight}`,
       `outerHeight: ${window.outerHeight}`,
@@ -450,7 +425,6 @@ if (localStorage.getItem("scc_debug") === "1") {
       `vv.offsetTop: ${vv ? vv.offsetTop : "n/a"}`,
       `vv.scale: ${vv ? vv.scale : "n/a"}`,
       `dpr: ${window.devicePixelRatio}`,
-      `--app-height: ${cs.getPropertyValue("--app-height")}`,
       `.app rect: top=${appRect.top} bottom=${appRect.bottom} h=${appRect.height}`,
       `.bottom-ui rect: top=${bottomRect.top} bottom=${bottomRect.bottom}`,
       `gap below bottom-ui: ${window.innerHeight - bottomRect.bottom}`,

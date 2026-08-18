@@ -1,4 +1,4 @@
-const CACHE = "scc-v4";
+const CACHE = "scc-v5";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,18 +25,18 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Réseau d'abord : on essaie toujours d'avoir la dernière version quand la
+// connexion est là (donc jamais de version figée pendant qu'on développe),
+// et on ne retombe sur le cache que si le réseau échoue (usage hors-ligne).
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

@@ -32,28 +32,25 @@ body {
 }
 
 .app {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  /* window.innerHeight mesuré en JS (voir app.js), fiable même en mode
-     standalone iOS (Ajout à l'écran d'accueil) où les unités CSS de
-     viewport (dvh/svh/lvh, voire un simple inset:0) peuvent laisser un
-     espace en bas à cause de la façon dont WebKit gère la zone sûre. */
-  height: calc(var(--app-height, 100vh));
+  /* flux flexbox normal en 3 lignes (header / stage / bottom-ui) plutôt
+     que du position:fixed + des zones réservées mesurées en JS : le
+     navigateur recalcule lui-même la mise en page à chaque changement de
+     viewport (barre d'adresse qui apparaît/disparaît, mode standalone),
+     de façon bien plus fiable que nos propres calculs. */
+  height: 100vh; /* repli pour les navigateurs sans dvh */
+  height: 100dvh;
   width: 100%;
+  display: flex;
+  flex-direction: column;
   user-select: none;
+  overflow: hidden;
 }
 
 .header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
+  flex: 0 0 auto;
   padding-top: calc(env(safe-area-inset-top) + clamp(14px, 4vh, 28px));
+  padding-bottom: 4px;
   text-align: center;
-  pointer-events: none;
 }
 
 .title-toggle {
@@ -63,7 +60,6 @@ body {
   padding: 6px 10px;
   margin: 0;
   cursor: pointer;
-  pointer-events: auto;
   display: inline-flex;
   align-items: center;
 }
@@ -91,12 +87,10 @@ body {
 }
 
 .stage {
-  position: absolute;
-  top: var(--reserved-top, 0px);
-  bottom: var(--reserved-bottom, 0px);
-  left: 0;
-  right: 0;
-  z-index: 1;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0; /* laisse le flex item se réduire correctement */
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -216,11 +210,8 @@ body {
 }
 
 .bottom-ui {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
+  flex: 0 0 auto;
+  padding-top: 4px;
   padding-bottom: calc(env(safe-area-inset-bottom) + clamp(14px, 3vh, 26px));
   text-align: center;
 }
