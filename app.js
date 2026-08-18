@@ -44,6 +44,8 @@ const VMIN_AMP = (VMIN_MAX - VMIN_MIN) / 2;
 const WARMUP_MS = 260; // montée rapide de repos -> taille mini au démarrage
 const SETTLE_MS = 450; // redescente en douceur vers le repos à la fin
 
+const header = document.querySelector(".header");
+const bottomUi = document.querySelector(".bottom-ui");
 const circle = document.getElementById("circle");
 const phaseLabel = document.getElementById("phaseLabel");
 const timeElapsedEl = document.getElementById("timeElapsed");
@@ -232,6 +234,18 @@ circle.addEventListener("click", () => {
     beginSession();
   }
 });
+
+function updateStageInsets() {
+  document.documentElement.style.setProperty("--reserved-top", `${header.offsetHeight}px`);
+  document.documentElement.style.setProperty("--reserved-bottom", `${bottomUi.offsetHeight}px`);
+}
+
+// Le "stage" (zone de respiration) est borné à l'espace réellement
+// disponible entre le header et l'UI du bas, mesuré en pixels, pour que
+// le disque (plafonné à 500px) ne les chevauche jamais.
+new ResizeObserver(updateStageInsets).observe(bottomUi);
+window.addEventListener("resize", updateStageInsets);
+updateStageInsets();
 
 renderModeSwitch();
 updateStaticDisplay();

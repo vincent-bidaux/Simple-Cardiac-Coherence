@@ -32,9 +32,8 @@ body {
 }
 
 .app {
-  position: relative;
-  height: 100dvh;
-  width: 100vw;
+  position: fixed;
+  inset: 0;
   user-select: none;
 }
 
@@ -59,17 +58,28 @@ body {
 
 .stage {
   position: absolute;
-  inset: 0;
+  top: var(--reserved-top, 0px);
+  bottom: var(--reserved-bottom, 0px);
+  left: 0;
+  right: 0;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  container-type: size;
 }
+
+/* Le disque est plafonné à 500px, et sa taille dépend du plus petit
+   côté du "stage" (via les unités cqmin) plutôt que du viewport entier,
+   pour ne jamais chevaucher le header ou l'UI du bas. Les valeurs en
+   vmin servent de repli pour les navigateurs sans container query units. */
 
 .glow {
   position: absolute;
-  width: 95vmin;
-  height: 95vmin;
+  width: min(95vmin, 475px);
+  height: min(95vmin, 475px);
+  width: min(95cqmin, 475px);
+  height: min(95cqmin, 475px);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(143, 215, 247, 0.16), rgba(143, 215, 247, 0) 68%);
   filter: blur(8px);
@@ -78,8 +88,10 @@ body {
 
 .max-ring {
   position: absolute;
-  width: 90vmin;
-  height: 90vmin;
+  width: min(90vmin, 450px);
+  height: min(90vmin, 450px);
+  width: min(90cqmin, 450px);
+  height: min(90cqmin, 450px);
   border-radius: 50%;
   border: 1.5px solid rgba(111, 192, 232, 0.6);
   background: transparent;
@@ -89,8 +101,10 @@ body {
 .circle {
   --scale: 0.1;
   position: relative;
-  width: 100vmin;
-  height: 100vmin;
+  width: min(100vmin, 500px);
+  height: min(100vmin, 500px);
+  width: min(100cqmin, 500px);
+  height: min(100cqmin, 500px);
   border-radius: 50%;
   border: none;
   padding: 0;
