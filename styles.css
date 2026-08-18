@@ -56,12 +56,38 @@ body {
   pointer-events: none;
 }
 
+.title-toggle {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  margin: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
 .app-name {
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-dimmer);
   font-weight: 500;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  margin-left: 6px;
+  border: 1px solid var(--text-dimmer);
+  border-radius: 50%;
+  color: var(--text-dimmer);
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .stage {
@@ -135,6 +161,60 @@ body {
   filter: brightness(1.03);
 }
 
+.circle-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(8, 26, 38, 0.55);
+  /* contrebalance le transform:scale() du parent pour rester lisible
+     quelle que soit la taille courante du cercle ; clamp() évite un
+     facteur qui explose quand --scale approche 0 (ex: apparition au
+     chargement) */
+  transform: scale(clamp(1, calc(1 / var(--scale, 0.1)), 12));
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.circle.active .circle-label {
+  opacity: 0;
+}
+
+.info-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13%;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.stage.info-open .info-panel {
+  opacity: 1;
+}
+
+.stage.info-open .glow,
+.stage.info-open .max-ring,
+.stage.info-open .circle {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .bottom-ui {
   position: absolute;
   left: 0;
@@ -177,6 +257,10 @@ body {
 .phase-label {
   flex: 1;
   text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(234, 246, 255, 0.28);
+  text-underline-offset: 3px;
 }
 
 .progress-track {

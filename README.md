@@ -40,19 +40,32 @@ programme en cours et démarre directement le nouveau.
 ## Utilisation
 
 - Choisir un mode via le switch en bas de l'écran.
-- Toucher le cercle pour démarrer / mettre en pause. Rien n'est écrit dans
-  le cercle : la phase (Prêt / Inspire / Expire) s'affiche en bas, entre
-  les deux compteurs.
+- Toucher le cercle, ou le mot "Démarrer"/"Start" en bas, pour démarrer /
+  mettre en pause — les deux sont équivalents. Au repos, "START" est
+  écrit dans le cercle ; ça disparaît dès qu'une séance démarre.
 - Le cercle grandit à l'inspiration, se réduit à l'expiration, entre 20 %
-  et 90 % de la petite dimension de l'écran (vmin). Un contour statique à
-  90 % marque le repère visuel de fin d'inspiration.
+  et 90 % de la petite dimension de l'écran (vmin, plafonné à 500px). Un
+  contour statique à 90 % marque le repère visuel de fin d'inspiration.
 - Au repos (avant de démarrer, ou une fois une séance terminée), le cercle
   se réduit à 10 % et sa couleur passe à 50 % d'opacité ; il repasse à
-  pleine opacité dès qu'une séance démarre.
-- Sous le cercle : temps écoulé à gauche, temps restant à droite, avec une
-  barre de progression de la séance entre les deux.
+  pleine opacité dès qu'une séance démarre. Une petite animation de
+  croissance joue à l'ouverture de l'app plutôt qu'un cercle qui apparaît
+  brutalement.
+- Sous le cercle : temps écoulé à gauche, temps restant à droite, la phase
+  (Démarrer/Start, Inspire, Expire, Pause, Terminé/Done) centrée entre les
+  deux, avec une barre de progression de la séance en dessous.
+- Toucher le titre en haut (avec l'icône "?") affiche une courte
+  explication de l'app à la place du cercle ; retoucher le titre la
+  referme.
 - L'écran reste allumé pendant une séance active (Screen Wake Lock, quand
   le navigateur le supporte).
+
+## Langue
+
+L'app se sert automatiquement en français ou en anglais selon la langue
+du navigateur (`navigator.language`) : français si le navigateur est en
+français, anglais sinon. Toutes les chaînes traduites sont dans
+`app.js` (objet `STRINGS`).
 
 ## Structure
 

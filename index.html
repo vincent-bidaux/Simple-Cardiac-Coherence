@@ -20,19 +20,24 @@
 <body>
 <main class="app">
   <header class="header">
-    <span class="app-name">Simple Cardiac Coherence</span>
+    <button type="button" class="title-toggle" id="titleToggle" aria-expanded="false">
+      <span class="app-name" id="appName">Simple Cardiac Coherence</span><span class="info-icon" aria-hidden="true">?</span>
+    </button>
   </header>
 
-  <section class="stage">
+  <section class="stage" id="stage">
     <div class="glow" aria-hidden="true"></div>
     <div class="max-ring" aria-hidden="true"></div>
-    <button class="circle" id="circle" type="button" aria-label="Démarrer ou mettre en pause la séance"></button>
+    <button class="circle" id="circle" type="button" aria-label="Démarrer ou mettre en pause la séance">
+      <span class="circle-label" id="circleLabel" aria-hidden="true">START</span>
+    </button>
+    <div class="info-panel" id="infoPanel"></div>
   </section>
 
   <section class="bottom-ui">
     <div class="time-row">
       <span class="time-elapsed" id="timeElapsed">0:00</span>
-      <span class="phase-label" id="phaseLabel">Prêt</span>
+      <span class="phase-label" id="phaseLabel" role="button" tabindex="0">Prêt</span>
       <span class="time-remaining" id="timeRemaining">5:00</span>
     </div>
     <div class="progress-track" aria-hidden="true">
