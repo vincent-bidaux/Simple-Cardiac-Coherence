@@ -251,7 +251,10 @@ function playTone(freq, duration, delay, peakGain) {
   osc.frequency.value = freq;
   const t0 = ctx.currentTime + delay;
   gain.gain.setValueAtTime(0, t0);
-  gain.gain.linearRampToValueAtTime(peakGain, t0 + 0.09);
+  // attaque lente (0.18s) : évite tout "clic", donne un son rond plutôt
+  // qu'un ping. La fréquence basse (registre grave/médium) fait le reste
+  // pour un timbre calme plutôt que cristallin.
+  gain.gain.linearRampToValueAtTime(peakGain, t0 + 0.18);
   gain.gain.linearRampToValueAtTime(0, t0 + duration);
   osc.connect(gain).connect(ctx.destination);
   osc.start(t0);
@@ -259,18 +262,31 @@ function playTone(freq, duration, delay, peakGain) {
 }
 
 function playStartChime() {
-  playTone(523.25, 0.55, 0, 0.1); // C5
-  playTone(659.25, 0.6, 0.12, 0.08); // E5
+  playTone(196.0, 0.9, 0, 0.14); // G3
+  playTone(261.63, 1.0, 0.2, 0.11); // C4
 }
 
 function playEndChime() {
-  playTone(659.25, 0.5, 0, 0.09); // E5
-  playTone(523.25, 0.65, 0.14, 0.07); // C5, résolution descendante
+  playTone(261.63, 0.85, 0, 0.12); // C4
+  playTone(196.0, 1.0, 0.22, 0.1); // G3, résolution descendante
+}
+
+// --- Vibration douce (Android/Chrome uniquement) -------------------------
+// navigator.vibrate() n'a jamais été implémenté par Apple : sur iPhone
+// (Safari, y compris en PWA installée), cet appel est un no-op silencieux,
+// quelle que soit l'autorisation — ce n'est pas une histoire de
+// permission, l'API est absente de WebKit. Là où elle existe, aucune
+// autorisation n'est demandée : l'appel fonctionne directement.
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
 }
 
 function beginSession() {
   clearTimeout(finishTimeout);
-  if (elapsedMs === 0) playStartChime();
+  if (elapsedMs === 0) {
+    playStartChime();
+    vibrate(30);
+  }
   circle.classList.add("active");
   runStartTs = performance.now();
   requestWakeLock();
@@ -320,6 +336,7 @@ function finishSession() {
   circle.classList.remove("active");
   releaseWakeLock();
   playEndChime();
+  vibrate([40, 90, 40]);
   phaseLabel.textContent = T.finished;
   updateTimeDisplay(sessionTotalMs);
   settleToRest();
