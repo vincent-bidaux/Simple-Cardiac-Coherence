@@ -277,14 +277,14 @@ body {
 
 .mode-switch {
   display: inline-flex;
-  gap: 4px;
+  gap: clamp(1px, 1vw, 4px);
   padding: 5px;
   margin: 10px auto 0;
   background: var(--pill-bg);
   border: 1px solid var(--pill-border);
   border-radius: 999px;
   backdrop-filter: blur(10px);
-  max-width: 94vw;
+  max-width: 96vw;
 }
 
 .mode-btn {
@@ -292,10 +292,13 @@ body {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-size: 13px;
+  /* clamp() plutôt qu'un seul saut de breakpoint : 4 pastilles (dont
+     "Standard 365", la plus longue) doivent tenir sans déborder même
+     sur les téléphones étroits (~375px). */
+  font-size: clamp(10.5px, 3vw, 13px);
   font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 9px 16px;
+  letter-spacing: 0.01em;
+  padding: clamp(7px, 2.2vw, 9px) clamp(7px, 3vw, 16px);
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
@@ -305,8 +308,4 @@ body {
 .mode-btn[aria-selected="true"] {
   background: var(--pill-active);
   color: #eaf9ff;
-}
-
-@media (max-width: 340px) {
-  .mode-btn { padding: 8px 12px; font-size: 12px; }
 }

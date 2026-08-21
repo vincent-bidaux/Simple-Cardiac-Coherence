@@ -8,6 +8,7 @@ const STRINGS = {
   fr: {
     ready: "Démarrer",
     inhale: "Inspire",
+    hold: "Retiens",
     exhale: "Expire",
     pause: "Pause",
     finished: "Terminé",
@@ -15,16 +16,18 @@ const STRINGS = {
     ariaModes: "Choisir un mode de respiration",
     ariaTitle: "En savoir plus sur l'app",
     info: "La cohérence cardiaque est une technique de respiration lente et régulière qui synchronise votre rythme cardiaque pour réduire le stress. Choisissez un rythme en bas de l'écran, puis respirez en suivant le cercle : il grandit à l'inspiration, il se réduit à l'expiration.",
-    description: "Cohérence cardiaque guidée : un cercle bleu clair grandit et se réduit selon 3 rythmes de respiration recommandés.",
+    description: "Cohérence cardiaque guidée : un cercle bleu clair grandit et se réduit selon 4 rythmes de respiration recommandés.",
     modes: {
       standard: { label: "Standard 365", detail: "6 resp/min · 5 min" },
       profond: { label: "Profond", detail: "4,5 resp/min · 5 min" },
       express: { label: "Express", detail: "6 resp/min · 3 min" },
+      m478: { label: "4-7-8", detail: "Inspire 4 · Retiens 7 · Expire 8" },
     },
   },
   en: {
     ready: "Start",
     inhale: "Breathe in",
+    hold: "Hold",
     exhale: "Breathe out",
     pause: "Paused",
     finished: "Done",
@@ -32,11 +35,12 @@ const STRINGS = {
     ariaModes: "Choose a breathing mode",
     ariaTitle: "Learn more about the app",
     info: "Cardiac coherence is a slow, regular breathing technique that synchronizes your heart rate to reduce stress. Pick a rhythm at the bottom of the screen, then breathe along with the circle: it grows as you breathe in, and shrinks as you breathe out.",
-    description: "Guided cardiac coherence: a light blue circle grows and shrinks following 3 recommended breathing rhythms.",
+    description: "Guided cardiac coherence: a light blue circle grows and shrinks following 4 recommended breathing rhythms.",
     modes: {
       standard: { label: "Standard 365", detail: "6 breaths/min · 5 min" },
       profond: { label: "Deep", detail: "4.5 breaths/min · 5 min" },
       express: { label: "Express", detail: "6 breaths/min · 3 min" },
+      m478: { label: "4-7-8", detail: "Inhale 4 · Hold 7 · Exhale 8" },
     },
   },
 };
@@ -49,18 +53,44 @@ function detectLocale() {
 const LOCALE = detectLocale();
 const T = STRINGS[LOCALE];
 
-// 3 modes = 3 couples (rythme, durée) parmi les plus recommandés en
-// cohérence cardiaque :
+// 4 modes, chacun défini par une liste de phases (en secondes) plutôt
+// qu'un simple rythme symétrique, pour couvrir aussi bien la cohérence
+// cardiaque (inspire/expire égaux) que le 4-7-8 (inspire/retiens/expire
+// de durées différentes) :
 // - "365" (Dr David O'Hare) : 6 respirations/minute, 5 minutes, 3x/jour —
-//   c'est LA référence, retenue ici comme mode par défaut.
+//   c'est LA référence en cohérence cardiaque, retenue ici par défaut.
 // - la fréquence de résonance individuelle se situe généralement entre
 //   4,5 et 7 resp/min : "Profond" couvre le bas de cette plage pour une
 //   pratique plus avancée, "Express" garde le rythme de référence dans
 //   un format court pour un reset rapide dans la journée.
+// - "4-7-8" (Dr Andrew Weil, inspiré du pranayama) : inspire 4s, retiens
+//   le souffle 7s, expire 8s — une technique différente de la cohérence
+//   cardiaque (respiration bloquée, pas de rythme cardiaque cible), mais
+//   qui se prête bien au même diagramme, avec une phase de rétention en
+//   plus. Utilisée pour s'endormir ; à ne pas confondre avec la
+//   "méthode militaire" (surtout de la relaxation/visualisation, pas de
+//   la respiration).
+function symmetricPhases(bpm) {
+  const half = 60 / bpm / 2;
+  return [
+    { type: "inhale", s: half },
+    { type: "exhale", s: half },
+  ];
+}
+
 const MODES = [
-  { id: "standard", bpm: 6, durationMin: 5 },
-  { id: "profond", bpm: 4.5, durationMin: 5 },
-  { id: "express", bpm: 6, durationMin: 3 },
+  { id: "standard", durationMin: 5, phases: symmetricPhases(6) },
+  { id: "profond", durationMin: 5, phases: symmetricPhases(4.5) },
+  { id: "express", durationMin: 3, phases: symmetricPhases(6) },
+  {
+    id: "m478",
+    durationMin: 4,
+    phases: [
+      { type: "inhale", s: 4 },
+      { type: "hold", s: 7 },
+      { type: "exhale", s: 8 },
+    ],
+  },
 ];
 
 const DEFAULT_MODE_ID = "standard";
@@ -71,8 +101,7 @@ const DEFAULT_MODE_ID = "standard";
 const VMIN_REST = 0.14; // au lancement de l'app / après la fin d'un programme
 const VMIN_MIN = 0.2; // taille mini pendant la respiration
 const VMIN_MAX = 0.9; // taille maxi (= le contour de référence)
-const VMIN_MID = (VMIN_MIN + VMIN_MAX) / 2;
-const VMIN_AMP = (VMIN_MAX - VMIN_MIN) / 2;
+const VMIN_MID = (VMIN_MIN + VMIN_MAX) / 2; // repli du settle-to-rest
 const WARMUP_MS = 260; // montée rapide de repos -> taille mini au démarrage
 const SETTLE_MS = 450; // redescente en douceur vers le repos à la fin
 const LOAD_GROW_MS = 500; // apparition en douceur au chargement de la page
@@ -204,6 +233,23 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// Découpe un cycle en phases de durées quelconques (inspire/retiens/
+// expire) et renvoie dans laquelle on se trouve à un instant donné, avec
+// la progression (0-1) à l'intérieur de cette phase. Généralise aussi
+// bien un cycle symétrique (cohérence cardiaque) qu'un cycle à 3 temps
+// inégaux avec rétention (4-7-8).
+function currentPhase(elapsedInPeriodMs, phases) {
+  let acc = 0;
+  for (const p of phases) {
+    const durMs = p.s * 1000;
+    if (elapsedInPeriodMs < acc + durMs) {
+      return { type: p.type, t: (elapsedInPeriodMs - acc) / durMs };
+    }
+    acc += durMs;
+  }
+  return { type: phases[phases.length - 1].type, t: 1 };
+}
+
 function tick() {
   const elapsed = getElapsed();
   if (elapsed >= sessionTotalMs) {
@@ -219,10 +265,19 @@ function tick() {
     phaseLabel.textContent = T.ready;
   } else {
     const breathElapsed = elapsed - WARMUP_MS;
-    const periodMs = 60000 / currentMode.bpm;
-    const phase = (breathElapsed % periodMs) / periodMs;
-    scale = VMIN_MID + VMIN_AMP * Math.sin(2 * Math.PI * phase - Math.PI / 2);
-    phaseLabel.textContent = phase < 0.5 ? T.inhale : T.exhale;
+    const periodMs = currentMode.phases.reduce((sum, p) => sum + p.s, 0) * 1000;
+    const { type, t } = currentPhase(breathElapsed % periodMs, currentMode.phases);
+    const eased = easeInOutCubic(t);
+    if (type === "inhale") {
+      scale = VMIN_MIN + (VMIN_MAX - VMIN_MIN) * eased;
+      phaseLabel.textContent = T.inhale;
+    } else if (type === "hold") {
+      scale = VMIN_MAX;
+      phaseLabel.textContent = T.hold;
+    } else {
+      scale = VMIN_MAX - (VMIN_MAX - VMIN_MIN) * eased;
+      phaseLabel.textContent = T.exhale;
+    }
   }
 
   setScale(scale);
