@@ -3,82 +3,9 @@
 Une app de cohérence cardiaque minimaliste : un cercle bleu clair sur fond
 sombre grandit à l'inspiration et se réduit à l'expiration, au rythme choisi.
 
-- **Site** : (à renseigner une fois déployé sur Netlify)
+- **Site** : https://simple-cardiac-coherence.abpq.cc
 - **Dépôt GitHub** : `vincent-bidaux/simple-cardiac-coherence`
 
 Aucune étape de build : c'est du HTML/CSS/JS statique, servi tel quel.
-Netlify déploie automatiquement à chaque push sur `main`, sans commande à
-lancer.
-
-## Déployer (depuis le téléphone, sans terminal)
-
-1. Aller sur [app.netlify.com](https://app.netlify.com) et se connecter.
-2. **Add new site → Import an existing project → Deploy with GitHub**.
-3. Choisir le dépôt `simple-cardiac-coherence`.
-4. Laisser les réglages de build vides (aucune commande, dossier de
-   publication `.`) — déjà configuré dans `netlify.toml`.
-5. Déployer. Chaque futur push sur `main` republie automatiquement.
-6. Sur le téléphone, ouvrir l'URL Netlify dans Safari/Chrome puis
-   **Partager → Sur l'écran d'accueil** pour l'installer comme une vraie
-   app (PWA, plein écran, icône dédiée).
-
-## Les 4 modes
-
-Chaque mode définit une liste de **phases** (en secondes) que le cercle
-suit en boucle — inspire (il grandit), éventuellement retiens (il reste
-au maximum), expire (il se réduit) — plus une **durée de séance** :
-
-| Mode | Rythme | Durée | Pourquoi |
-|---|---|---|---|
-| **Standard 365** *(par défaut)* | 6 resp/min (5 s inspire / 5 s expire) | 5 min | La référence : méthode "3-6-5" du Dr David O'Hare — 3 séances/jour, 6 resp/min, 5 min. Le rythme le plus universellement recommandé (~0,1 Hz, la fréquence de résonance cardiovasculaire moyenne). |
-| **Profond** | 4,5 resp/min | 5 min | Rythme plus lent, pour une pratique avancée ou pour se rapprocher de sa fréquence de résonance personnelle (généralement entre 4,5 et 7 resp/min). |
-| **Express** | 6 resp/min | 3 min | Le rythme de référence en format court, pour un reset rapide dans la journée quand 5 minutes ne sont pas possibles. |
-| **4-7-8** | Inspire 4s · Retiens 7s · Expire 8s | 4 min | Technique du Dr Andrew Weil (inspirée du pranayama), utilisée pour s'endormir. Différente de la cohérence cardiaque (respiration bloquée, pas de rythme cardiaque cible) mais compatible avec le même cercle, avec une phase de rétention en plus — à ne pas confondre avec la "méthode militaire" (surtout de la relaxation/visualisation, sans respiration guidée). |
-
-Choisir un autre mode pendant une séance en cours quitte immédiatement le
-programme en cours et démarre directement le nouveau.
-
-## Utilisation
-
-- Choisir un mode via le switch en bas de l'écran.
-- Toucher le cercle, ou le mot "Démarrer"/"Start" en bas, pour démarrer /
-  mettre en pause — les deux sont équivalents. Au repos, "START" est
-  écrit dans le cercle ; ça disparaît dès qu'une séance démarre.
-- Le cercle grandit à l'inspiration, se réduit à l'expiration, entre 20 %
-  et 90 % de la petite dimension de l'écran (vmin, plafonné à 500px). Un
-  contour statique à 90 % marque le repère visuel de fin d'inspiration.
-- Au repos (avant de démarrer, ou une fois une séance terminée), le cercle
-  se réduit à 10 % et sa couleur passe à 50 % d'opacité ; il repasse à
-  pleine opacité dès qu'une séance démarre. Une petite animation de
-  croissance joue à l'ouverture de l'app plutôt qu'un cercle qui apparaît
-  brutalement.
-- Sous le cercle : temps écoulé à gauche, temps restant à droite, la phase
-  (Démarrer/Start, Inspire, Expire, Pause, Terminé/Done) centrée entre les
-  deux, avec une barre de progression de la séance en dessous.
-- Toucher le titre en haut (avec l'icône "?") affiche une courte
-  explication de l'app à la place du cercle ; retoucher le titre la
-  referme.
-- L'écran reste allumé pendant une séance active (Screen Wake Lock, quand
-  le navigateur le supporte).
-
-## Langue
-
-L'app se sert automatiquement en français ou en anglais selon la langue
-du navigateur (`navigator.language`) : français si le navigateur est en
-français, anglais sinon. Toutes les chaînes traduites sont dans
-`app.js` (objet `STRINGS`).
-
-## Structure
-
-Site statique, sans framework ni dépendance :
-
-```
-index.html    structure de la page
-styles.css    design (fond sombre, cercle, switch de modes)
-app.js        logique des modes, animation du souffle, minuteur
-manifest.json  PWA (installable sur l'écran d'accueil)
-sw.js          service worker (cache, fonctionnement hors-ligne)
-icons/         icônes PWA (192, 512, apple-touch-icon, favicons)
-```
-
-Projet personnel.
+Cloudflare (Workers Builds) déploie automatiquement à chaque push sur `main`
+(config dans `wrangler.jsonc`, fichiers servis dans `public/`, en-têtes dans `public/_headers`).

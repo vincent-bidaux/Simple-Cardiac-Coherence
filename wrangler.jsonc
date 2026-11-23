@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "simple-cardiac-coherence",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./public" },
+  "routes": [{ "pattern": "simple-cardiac-coherence.abpq.cc", "custom_domain": true }],
+  "workers_dev": false
+}
